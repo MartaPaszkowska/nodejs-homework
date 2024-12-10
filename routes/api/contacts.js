@@ -13,16 +13,18 @@ const {
 
 const { contactSchema } = require("../../models/validation");
 
-router.get("/", async (req, res, next) => {
+const authMiddleware = require("../../middleware/authorization");
+
+router.get("/", authMiddleware, async (req, res, next) => {
 	try {
-		const contacts = await listContacts();
+		const contacts = await listContacts(req.user._id);
 		res.status(200).json(contacts);
 	} catch (error) {
 		next(error);
 	}
 });
 
-router.get("/:id", async (req, res, next) => {
+router.get("/:id", authMiddleware, async (req, res, next) => {
 	try {
 		const { id } = req.params;
 		const contact = await getContactById(id);
@@ -35,7 +37,7 @@ router.get("/:id", async (req, res, next) => {
 	}
 });
 
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", authMiddleware, async (req, res, next) => {
 	try {
 		const { id } = req.params;
 		const deleted = await removeContact(id);
@@ -48,21 +50,21 @@ router.delete("/:id", async (req, res, next) => {
 	}
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", authMiddleware, async (req, res, next) => {
 	try {
 		const { error } = contactSchema.validate(req.body);
 		if (error) {
 			return res.status(400).json({ message: error.details[0].message });
 		}
 
-		const newContact = await addContact(req.body);
+		const newContact = await addContact(req.body, req.user._id);
 		res.status(201).json(newContact);
 	} catch (error) {
 		next(error);
 	}
 });
 
-router.put("/:id", async (req, res, next) => {
+router.put("/:id", authMiddleware, async (req, res, next) => {
 	try {
 		const { error } = contactSchema.validate(req.body);
 		if (error) {
@@ -84,7 +86,7 @@ router.put("/:id", async (req, res, next) => {
 	}
 });
 
-router.patch("/:id/favorite", async (req, res, next) => {
+router.patch("/:id/favorite", authMiddleware, async (req, res, next) => {
 	try {
 		const { id } = req.params;
 		const { favorite } = req.body;

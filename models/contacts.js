@@ -1,8 +1,8 @@
 const Contact = require("./contactSchema.js");
 
-async function listContacts() {
+async function listContacts(userId) {
 	try {
-		const contacts = await Contact.find();
+		const contacts = await Contact.find({ owner: userId });
 		return contacts;
 	} catch (error) {
 		console.error("Błąd podczas pobierania kontaktów:", error.message);
@@ -34,9 +34,12 @@ async function removeContact(id) {
 	}
 }
 
-async function addContact(newContactData) {
+async function addContact(newContactData, userId) {
 	try {
-		const newContact = await Contact.create(newContactData);
+		const newContact = await Contact.create({
+			...newContactData,
+			owner: userId,
+		});
 		return `Dodano nowy kontakt: ${newContact}`;
 	} catch (error) {
 		console.error("Błąd podczas tworzenia kontaktu:", error.message);
