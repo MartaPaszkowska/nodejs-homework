@@ -17,7 +17,12 @@ const authMiddleware = require("../../middleware/authorization");
 
 router.get("/", authMiddleware, async (req, res, next) => {
 	try {
-		const contacts = await listContacts(req.user._id);
+		const { page, limit, favorite } = req.query;
+		const contacts = await listContacts(req.user._id, {
+			page,
+			limit,
+			favorite,
+		});
 		res.status(200).json(contacts);
 	} catch (error) {
 		next(error);

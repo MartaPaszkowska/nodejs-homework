@@ -1,8 +1,22 @@
 const Contact = require("./contactSchema.js");
 
-async function listContacts(userId) {
+async function listContacts(userId, { page = 1, limit = 20, favorite }) {
 	try {
-		const contacts = await Contact.find({ owner: userId });
+		const query = { owner: userId };
+		if (favorite !== undefined) {
+			query.favorite = favorite === "true";
+		}
+
+		const options = {
+			page: parseInt(page, 10),
+			limit: parseInt(limit, 10),
+			sort: { name: 1 },
+		};
+
+		const contacts = await Contact.find(query)
+			.skip((options.page - 1) * options.limit)
+			.limit(options.limit);
+
 		return contacts;
 	} catch (error) {
 		console.error("Błąd podczas pobierania kontaktów:", error.message);

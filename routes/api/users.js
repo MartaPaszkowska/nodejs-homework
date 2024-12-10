@@ -3,7 +3,11 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const User = require("../../models/userSchema");
-const { userSchema, loginSchema } = require("../../models/validation");
+const {
+	userSchema,
+	loginSchema,
+	subscriptionSchema,
+} = require("../../models/validation");
 const authMiddleware = require("../../middleware/authorization");
 
 const router = express.Router();
@@ -106,6 +110,28 @@ router.get("/logout", authMiddleware, async (req, res, next) => {
 router.get("/current", authMiddleware, async (req, res, next) => {
 	try {
 		const user = req.user;
+
+		res.status(200).json({
+			email: user.email,
+			subscription: user.subscription,
+		});
+	} catch (error) {
+		next(error);
+	}
+});
+
+router.patch("/", authMiddleware, async (req, res, next) => {
+	try {
+		const { error } = subscriptionSchema.validate(req.body);
+		if (error) {
+			return res.status(400).json({ message: error.details[0].message });
+		}
+
+		const user = await User.findByIdAndUpdate(
+			req.user._id,
+			{ subscription: req.body.subscription },
+			{ new: true, runValidators: true }
+		);
 
 		res.status(200).json({
 			email: user.email,
