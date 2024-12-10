@@ -28,7 +28,7 @@ async function removeContact(id) {
 		if (!deleted) {
 			return null;
 		}
-		return deleted;
+		return `Usunięto kontakt: ${deleted}`;
 	} catch (error) {
 		console.error("Błąd podczas usuwania kontaktu:", error.message);
 	}
@@ -37,7 +37,7 @@ async function removeContact(id) {
 async function addContact(newContactData) {
 	try {
 		const newContact = await Contact.create(newContactData);
-		return newContact;
+		return `Dodano nowy kontakt: ${newContact}`;
 	} catch (error) {
 		console.error("Błąd podczas tworzenia kontaktu:", error.message);
 	}
@@ -54,7 +54,7 @@ async function updateContact(id, updateFields) {
 			updateFields,
 			{ new: true, runValidators: true }
 		);
-		return updatedContact;
+		return `Zaktualizowano kontakt: ${updatedContact}`;
 	} catch (error) {
 		console.error("Błąd podczas aktualizacji kontaktu:", error.message);
 	}
@@ -73,7 +73,7 @@ async function updateStatusContact(id, favorite) {
 			{ new: true, runValidators: true }
 		);
 
-		return updatedContact;
+		return `Zaktualizowano status kontaktu: ${updatedContact}`;
 	} catch (error) {
 		console.error(
 			"Błąd podczas aktualizacji statusu kontaktu:",

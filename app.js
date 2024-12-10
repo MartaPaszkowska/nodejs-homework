@@ -1,10 +1,11 @@
 const express = require("express");
 const logger = require("morgan");
 const cors = require("cors");
-const mongoose = require("mongoose");
+
 require("dotenv").config();
 
 const contactsRouter = require("./routes/api/contacts");
+const connectDB = require("./data-db");
 
 const app = express();
 
@@ -21,17 +22,10 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-	res.status(500).json({ message: err.message });
+	const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+	res.status(statusCode).json({ message: err.message });
 });
 
-const MONGO_URI = process.env.MONGO_URI;
-
-mongoose
-	.connect(MONGO_URI)
-	.then(() => console.log("Database connection successful"))
-	.catch((error) => {
-		console.error("Database connection error:", error.message);
-		process.exit(1);
-	});
+connectDB();
 
 module.exports = app;
