@@ -101,7 +101,7 @@ router.get("/logout", authMiddleware, async (req, res, next) => {
 		user.token = null;
 		await user.save();
 
-		res.status(204).send();
+		res.status(200).json({ message: "Successfully logged out" });
 	} catch (error) {
 		next(error);
 	}
