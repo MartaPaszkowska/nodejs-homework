@@ -1,6 +1,10 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const fs = require("fs/promises");
+const path = require("path");
+const gravatar = require("gravatar");
+const jimp = require("jimp");
 
 const User = require("../../models/userSchema");
 const {
@@ -8,7 +12,10 @@ const {
 	loginSchema,
 	subscriptionSchema,
 } = require("../../models/validation");
+
 const authMiddleware = require("../../middleware/authorization");
+const upload = require("../../middleware/upload");
+const avatarsDir = path.join(__dirname, "../../public/avatars");
 
 const router = express.Router();
 
@@ -28,9 +35,16 @@ router.post("/signup", async (req, res, next) => {
 
 		const hashedPassword = await bcrypt.hash(password, 10);
 
+		const avatarURL = gravatar.url(email, {
+			s: "200",
+			r: "pg",
+			d: "retro",
+		});
+
 		const newUser = await User.create({
 			email,
 			password: hashedPassword,
+			avatarURL,
 		});
 
 		const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
@@ -45,6 +59,7 @@ router.post("/signup", async (req, res, next) => {
 				token,
 				email: newUser.email,
 				subscription: newUser.subscription,
+				avatarURL: newUser.avatarURL,
 			},
 		});
 	} catch (error) {
@@ -141,5 +156,39 @@ router.patch("/", authMiddleware, async (req, res, next) => {
 		next(error);
 	}
 });
+
+router.patch(
+	"/avatars",
+	authMiddleware,
+	upload.single("avatar"),
+	async (req, res, next) => {
+		try {
+			if (!req.file) {
+				return res.status(400).json({ message: "File not provided" });
+			}
+
+			const { path: tempPath, originalname } = req.file;
+			const { _id } = req.user;
+
+			const filename = `${_id}-${originalname}`;
+			const resultPath = path.join(avatarsDir, filename);
+
+			const image = await jimp.read(tempPath);
+			await image.resize(250, 250).writeAsync(resultPath);
+
+			await fs.unlink(tempPath);
+
+			const avatarURL = `/avatars/${filename}`;
+			await User.findByIdAndUpdate(_id, { avatarURL });
+
+			res.status(200).json({ avatarURL });
+		} catch (error) {
+			if (req.file && req.file.path) {
+				await fs.unlink(req.file.path);
+			}
+			next(error);
+		}
+	}
+);
 
 module.exports = router;

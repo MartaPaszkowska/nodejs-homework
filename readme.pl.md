@@ -29,3 +29,10 @@ Uważnie czytaj komentarze mentora. Popraw uwagi i zrób commit na gałęzi z za
 -   `npm lint:fix` &mdash; to samo co powyższe, ale również automatycznie poprawia proste błędy.
 
 http://localhost:3000/api/contacts
+
+mailgun
+host: smtp.mailgun.org
+auth: {
+user: "postmaster@sandbox4da2190789e74943b49c6fd70aa06ae9.mailgun.org",
+pass: "95f0d2ffbd245256a8e89f42324846fd-0920befd-8fd6199e"
+}
