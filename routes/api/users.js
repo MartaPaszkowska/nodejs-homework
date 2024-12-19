@@ -5,6 +5,7 @@ const fs = require("fs/promises");
 const path = require("path");
 const gravatar = require("gravatar");
 const jimp = require("jimp");
+const crypto = require("crypto");
 
 const User = require("../../models/userSchema");
 const {
@@ -16,6 +17,7 @@ const {
 const authMiddleware = require("../../middleware/authorization");
 const upload = require("../../middleware/upload");
 const avatarsDir = path.join(__dirname, "../../public/avatars");
+const sendVerificationEmail = require("../../controllers/users/emailService");
 
 const router = express.Router();
 
@@ -41,20 +43,24 @@ router.post("/signup", async (req, res, next) => {
 			d: "retro",
 		});
 
+		const verificationToken = crypto.randomUUID();
+
 		const newUser = await User.create({
 			email,
 			password: hashedPassword,
 			avatarURL,
+			verificationToken,
 		});
+		await sendVerificationEmail(email, verificationToken);
 
 		const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
 			expiresIn: "1h",
 		});
-
 		newUser.token = token;
 		await newUser.save();
 
 		res.status(201).json({
+			message: "Registration successful, please verify your email",
 			user: {
 				token,
 				email: newUser.email,
@@ -190,5 +196,25 @@ router.patch(
 		}
 	}
 );
+
+router.get("/verify/:verificationToken", async (req, res, next) => {
+	try {
+		const { verificationToken } = req.params;
+
+		const user = await User.findOne({ verificationToken });
+
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		user.verify = true;
+		user.verificationToken = null;
+		await user.save();
+
+		res.status(200).json({ message: "Verification successful" });
+	} catch (error) {
+		next(error);
+	}
+});
 
 module.exports = router;
